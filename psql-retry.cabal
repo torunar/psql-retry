@@ -1,0 +1,60 @@
+cabal-version:      3.0
+name:               psql-retry
+version:            0.1.0.0
+synopsis:           Retry psql on lock timeout errors
+-- description:
+homepage:           https://github.com/kronor-io/psql-retry
+license:            LGPL-3.0-or-later
+license-file:       LICENSE
+author:             pranaysashank
+maintainer:         pranay.sashank@kronor.io
+-- copyright:
+category:           Development
+build-type:         Simple
+extra-doc-files:    CHANGELOG.md
+-- extra-source-files:
+
+common warnings
+    ghc-options: -Wall
+
+library
+    import:           warnings
+    exposed-modules:  PsqlRetry
+    other-modules: Paths_psql_retry
+    -- other-extensions:
+    build-depends:
+        base ^>=4.19.1.0,
+        text,
+        opt-env-conf,
+        streamly-process,
+        streamly,
+        streamly-core,
+        string-interpolate,
+        retry,
+        unix
+    hs-source-dirs:   src
+    default-language: Haskell2010
+
+executable psql-retry
+    import:           warnings
+    main-is:          Main.hs
+    -- other-modules:
+    -- other-extensions:
+    build-depends:
+        base ^>=4.19.1.0,
+        psql-retry
+
+    hs-source-dirs:   app
+    default-language: Haskell2010
+
+test-suite psql-retry-test
+    import:           warnings
+    default-language: Haskell2010
+    -- other-modules:
+    -- other-extensions:
+    type:             exitcode-stdio-1.0
+    hs-source-dirs:   test
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.19.1.0,
+        psql-retry
