@@ -17,8 +17,7 @@
     cabal-audit-src.url = "github:kronor-io/cabal-audit";
   };
   outputs =
-    {
-      self
+    { self
     , git-hooks
     , haskell-nix
     , hackage-nix
@@ -58,61 +57,78 @@
       eachSystem = f: foldAttrs mergeAttrs { }
         (map (s: builtins.mapAttrs (_: v: { ${s} = v; }) (f s)) supportedSystems);
     in
-      eachSystem(system:
-        let
-          haskellNix = import haskell-nix {
-            inherit system;
-            sourcesOverride = {
-              hackage = hackage-nix;
-            };
-          };
+    eachSystem (system:
+    let
+      haskellNix = import haskell-nix {
+        inherit system;
+        sourcesOverride = {
+          hackage = hackage-nix;
+        };
+      };
 
-          pkgs = import nixpkgs (
-            { inherit system;
-              overlays = [ haskellNix.overlay ];
-            }
-          );
-          pristinePkgs = import nixpkgs (
-            { inherit system;
-            }
-          );
-          compiler-nix-name = "ghc982";
-          index-state = "2025-07-29T18:43:35Z";
-
-          psqlRetryProject = pkgs.haskell-nix.project {
-            src = ./.;
-            inputMap = {
-              "https://kronor-io.github.io/kronor-haskell-packages" = kronor-haskell-packages;
-            };
-
-            modules = (if system == "x86_64-darwin" || system == "aarch64-darwin" then [{
-              packages = {
-                streamly = {
-                  components = {
-                    library = { libs = [ pkgs.darwin.apple_sdk.frameworks.Cocoa ]; };
-                  };
-                };
-              };
-            }] else [{
-              dontPatchELF = false;
-              dontStrip = false;
-            }]) ++ [{ doHaddock = false; }];
-
-            inherit compiler-nix-name;
-            cabalProjectFreeze = builtins.readFile ./cabal.project.freeze;
-
-            supportHpack = false;
-          };
-        in {
-          packages = {
-            default = psqlRetryProject.psql-retry.components.exes.psql-retry;
-          };
-          apps = {
-            default = {
-              type = "app";
-              program = "${psqlRetryProject.psql-retry.components.exes.psql-retry}/bin/psql-retry";
-            };
-          };
+      pkgs = import nixpkgs (
+        {
+          inherit system;
+          overlays = [ haskellNix.overlay ];
         }
       );
+      pristinePkgs = import nixpkgs (
+        {
+          inherit system;
+        }
+      );
+      compiler-nix-name = "ghc982";
+      index-state = "2025-07-29T18:43:35Z";
+
+      psqlRetryProject = pkgs.haskell-nix.project {
+        src = ./.;
+        inputMap = {
+          "https://kronor-io.github.io/kronor-haskell-packages" = kronor-haskell-packages;
+        };
+
+        modules = (if system == "x86_64-darwin" || system == "aarch64-darwin" then [{
+          packages = {
+            streamly = {
+              components = {
+                library = { libs = [ pkgs.darwin.apple_sdk.frameworks.Cocoa ]; };
+              };
+            };
+          };
+        }] else [{
+          dontPatchELF = false;
+          dontStrip = false;
+        }]) ++ [{ doHaddock = false; }];
+
+        inherit compiler-nix-name;
+        cabalProjectFreeze = builtins.readFile ./cabal.project.freeze;
+
+        supportHpack = false;
+      };
+
+      shell = psqlRetryProject.shellFor {
+
+        withHoogle = false;
+
+        shellHook = ''
+          ${self.checks.${system}.pre-commit-check.shellHook}
+        '';
+      };
+
+    in
+    {
+      checks = {
+        pre-commit-check = git-hooks.lib.${system}.run {
+          src = ./.;
+          hooks = {
+            nixpkgs-fmt.enable = true;
+            fourmolu.enable = true;
+          };
+        };
+      };
+      packages = {
+        default = psqlRetryProject.psql-retry.components.exes.psql-retry;
+      };
+      devShells.default = shell;
+    }
+    );
 }

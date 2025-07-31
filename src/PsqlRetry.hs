@@ -1,16 +1,16 @@
-{-# language ApplicativeDo #-}
-{-# language BlockArguments #-}
-{-# language DerivingStrategies #-}
-{-# language FlexibleContexts #-}
-{-# language ImportQualifiedPost #-}
-{-# language NumericUnderscores #-}
-{-# language OverloadedRecordDot #-}
-{-# language QuasiQuotes #-}
-{-# language ScopedTypeVariables #-}
+{-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE NumericUnderscores #-}
+{-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
-module PsqlRetry (runMain, PsqlStatus(..), PsqlRetry(..), retryPsql) where
+module PsqlRetry (runMain, PsqlStatus (..), PsqlRetry (..), retryPsql) where
 
-import Control.Concurrent (throwTo, myThreadId, threadDelay)
+import Control.Concurrent (myThreadId, threadDelay, throwTo)
 import Control.Exception (AsyncException (..), SomeException, catch, throwIO)
 import Control.Monad (when)
 import Control.Retry qualified as Retry
@@ -32,7 +32,6 @@ import System.Exit (exitFailure, exitSuccess)
 import System.Mem (performMinorGC)
 import System.Posix.Signals
 
-
 runMain :: IO ()
 runMain = do
     -- don't use the one from safe-exceptions/rio/unlift-io, as it doesn't
@@ -46,7 +45,6 @@ runMain = do
             -- \^ hopefully that's enough for psql
             throwIO e
 
-
 runMain2 :: IO ()
 runMain2 = do
     tId <- myThreadId
@@ -59,22 +57,22 @@ runMain2 = do
     description :: String
     description = "Retry psql on lock timeout errors, instead of doing the same from inside a plpgsql script as that can cause further issues due to the presence of subtransactions"
 
-
 data PsqlRetry = PsqlRetry String
 
 instance HasParser PsqlRetry where
-  settingsParser = do
-    psqlArgs <- setting [ help "The exact string to be passed to psql command"
-                        , reader str
-                        , OptEnvConf.env "PSQL_ARGS"
-                        , metavar "PSQL_ARGS"
-                        , argument
-                        ]
-    pure $ PsqlRetry psqlArgs
+    settingsParser = do
+        psqlArgs <-
+            setting
+                [ help "The exact string to be passed to psql command"
+                , reader str
+                , OptEnvConf.env "PSQL_ARGS"
+                , metavar "PSQL_ARGS"
+                , argument
+                ]
+        pure $ PsqlRetry psqlArgs
 
 data PsqlStatus = ShouldRetry | PsqlSuccess | ShouldExit
     deriving stock (Show)
-
 
 retryPsql :: String -> IO ()
 retryPsql args = do
