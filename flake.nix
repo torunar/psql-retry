@@ -103,36 +103,9 @@
 
             supportHpack = false;
           };
-          psqlRetryProjectMusl64 = pkgs.pkgsMusl.haskell-nix.project {
-            src = ./.;
-            inputMap = {
-              "https://kronor-io.github.io/kronor-haskell-packages" = kronor-haskell-packages;
-            };
-
-            modules = (if system == "x86_64-darwin" || system == "aarch64-darwin" then [{
-              packages = {
-                streamly = {
-                  components = {
-                    library = { libs = [ pkgs.darwin.apple_sdk.frameworks.Cocoa ]; };
-                  };
-                };
-              };
-            }] else [{
-              dontPatchELF = false;
-              dontStrip = false;
-            }]) ++ [{ doHaddock = false; }];
-
-            inherit compiler-nix-name;
-            cabalProjectFreeze = builtins.readFile ./cabal.project.freeze;
-
-            supportHpack = false;
-          };
         in {
-
-          inherit pkgs pristinePkgs;
           packages = {
             default = psqlRetryProject.psql-retry.components.exes.psql-retry;
-            psql-retry-static = psqlRetryProjectMusl64.psql-retry.components.exes.psql-retry;
           };
           apps = {
             default = {
