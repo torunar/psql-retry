@@ -1,6 +1,17 @@
 packages: .
 
-source-repository-package
-   type: git
-   location: https://github.com/composewell/streamly-process.git
-   tag: 035104bb7a68753339e3ba4a4aa690412d930e20
+constraints:
+  streamly-process ==0.3.1.0.0.0.0.1
+
+-- Use a unique name here, otherwise cabal will get confused
+repository github-kronor-haskell-packages
+  -- Use the GitHub pages URL for your repository here
+  url: https://kronor-io.github.io/kronor-haskell-packages
+  secure: True
+  -- Read above how to create keys
+  root-keys:
+    64307ca6c1cee780dd01e5e11193ba606b21fe1dd6a9102b838daff0c747eded
+    85a0bbddb3afe87449114e7b0622c9c80bd9164b5228dbc7db9fe66f3043f540
+    f344d0824b70101babfdea1e470b7388f6b8fc51b41186a627e98c71068a838c
+
+index-state: hackage.haskell.org 2025-07-29T18:43:35Z
