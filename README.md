@@ -22,22 +22,24 @@ A script like the below can be used with sqitch.
 #! /usr/bin/env bash
 # psql-retry.sh
 
-# This is mean to be used as the argument for --client in sqitch
+# This is meant to be used as the argument for --client in sqitch
 
-db_name=$1
-shift
+# This script takes all command-line arguments passed by sqitch, escapes them
+# for shell evaluation, and exports them as PSQL_ARGS environment variable
+# for psql-retry to use.
 
-connection_string="$1"
-shift
+declare -a processed_args=()
 
-# while $@ does not start with --quiet, keep appending args to connection_string
-# --quiet is the first argumet after the connections string that sqitch passes.
-while [[ "$1" != "--quiet" ]]; do
-  connection_string="$connection_string $1"
-  shift
+# Using "$@" ensures that arguments with spaces are treated as single entities.
+for arg in "$@"
+do
+  # printf "%q" escapes the argument in a way that the shell can
+  # safely re-evaluate. This handles single quotes, spaces, and all
+  # other special characters.
+  processed_args+=("$(printf "%q" "$arg")")
 done
 
-export PSQL_ARGS="$db_name '$connection_string' $@"
+export PSQL_ARGS="${processed_args[*]}"
 
 # if psql-retry not in the PATH then get it with nix
 if ! command -v psql-retry &> /dev/null
